@@ -94,19 +94,35 @@ void child_connected(const child_t *child, bool is_connected_to_root) {
     if(res == 0) last_index++;
     else printf("error of adding a child: %d\n", res);
 }
+//void print_leaf()
+
 void remove_branch(node_t *node) {
-    node_t *node_to_remove = NULL, *parent_of_node = NULL, *left_sibling = NULL;
+    node_t *parent = NULL, *left = NULL;
+    // check if the node being removed is a first child of its parent;
     for (int i = 0; i < MAX_NODES; i++) {
-        if(is_same(nodes[i].next_sibling->mac, node->mac))
-            left_sibling = &nodes[i];
+        if(is_same(nodes[i].first_child->mac, node->mac))
+            parent = &nodes[i];
     }
-    if (left_sibling == NULL) {
+    if (parent != NULL) {
+        if (node->next_sibling != NULL) {
+            parent->first_child = node->next_sibling;
+        } else {
+            parent->first_child = NULL;
+        }
+    } // if not so, find the left sibling of it
+    else {
         for (int i = 0; i < MAX_NODES; i++) {
-            if(is_same(nodes[i].first_child->mac, node->mac))
-                parent_of_node = &nodes[i];
+            if(is_same(nodes[i].next_sibling->mac, node->mac))
+                left = &nodes[i];
+        }
+        if (node->next_sibling != NULL) {
+            left->next_sibling = node->next_sibling;
+        } else {
+            left->next_sibling = NULL;
         }
     }
-
+    // to this point all references must be updated
+    // relay node to recursively delete itself and all the childs.
 
 }
 void child_lost(child_t *lost_child) {
@@ -127,11 +143,26 @@ void mesh_child_connected(){
 }
 // from all other nodes
 void mesh_rx(){
-    fill_child(&childs[0],&root_childs[1]);
+    fill_child(&childs[0],&root_childs[0]);
     fill_child(&childs[1],&root_childs[1]);
+    fill_child(&childs[2],&root_childs[2]);
+    fill_child(&childs[3],&root_childs[2]);
     child_connected(&childs[0], false);
     child_connected(&childs[1], false);
+    child_connected(&childs[2], false);
+    child_connected(&childs[3], false);
 }
+void visit_nodes(node_t *node) {
+    node_t *next = node;
+    printf(""MACSTR"\n", MAC2STR(node->mac));
+    while(next != NULL) {
+        if(next->first_child != NULL) {
+            visit_nodes(next->first_child);
+        }
+        next = next->next_sibling;
+    }
+}
+
 void print_all_nodes(){
     for (int i = 0; i < MAX_NODES; i++) {
         if (*nodes[i].mac != 0) {
@@ -142,7 +173,13 @@ void print_all_nodes(){
             //printf("next sibling %p\n", nodes[i].next_sibling);
         }
     }
-    printf("level 1: %d level 2: %d level 3: %d level 4: %d level 5: %d level 6: %d\n", levels[0],levels[1],levels[2],levels[3],levels[4],levels[5]);
+    printf("1 - %d\n2 - %d\n3 - %d\n4 - %d\n5 - %d\n6 - %d\n", levels[0],levels[1],levels[2],levels[3],levels[4],levels[5]);
+    visit_nodes(root.first_child);
+    printf("\n");
+    visit_nodes(root.first_child->next_sibling);
+    printf("\n");
+    visit_nodes(root.first_child->next_sibling->next_sibling);
+
 }
 void main_fun(){
     mesh_started();
@@ -156,10 +193,6 @@ void test(){
     fill_child(&childs[i],&root_childs[1]);
     printf(""MACSTR"\n", MAC2STR(childs[i].mac));
     printf(""MACSTR"\n", MAC2STR(childs[i].parent_mac));
-}
-void test2(){
-    uint8_t mac[6] = {1,1,1,11,12,32};
-    printf("%d\n", is_same(childs[8].mac, mac));
 }
 int main() {
     main_fun();
