@@ -18,15 +18,15 @@ static child_t root_childs[ROOT_CHILDS_SIZE] = {
         {.mac = {1, 1, 1, 11, 12, 3},.level = 0}
 };
 static child_t childs[CHILDS_SIZE] = {
-        {.mac = {1, 1, 1, 11, 12, 11},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 12},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 13},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 21},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 22},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 23},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 31},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 32},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 33},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 26},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 27},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 28},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 42},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 43},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 44},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 58},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 59},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 60},.level = 1},
 };
 typedef struct node {
     struct node *root;
@@ -143,19 +143,21 @@ void mesh_child_connected(){
 }
 // from all other nodes
 void mesh_rx(){
-    fill_child(&childs[0],&root_childs[0]);
-    fill_child(&childs[1],&root_childs[1]);
-    fill_child(&childs[2],&root_childs[2]);
-    fill_child(&childs[3],&root_childs[2]);
-    child_connected(&childs[0], false);
-    child_connected(&childs[1], false);
-    child_connected(&childs[2], false);
-    child_connected(&childs[3], false);
+    int n = 6;
+    fill_child(&childs[n],&root_childs[0]);
+    child_connected(&childs[n], false);
+    n = 3;
+    fill_child(&childs[n],&root_childs[1]);
+    child_connected(&childs[n], false);
+    //fill_child(&childs[6],&root_childs[2]);
+    //child_connected(&childs[6], false);
+    //fill_child(&childs[7],&root_childs[2]);
+    //child_connected(&childs[7], false);
 }
 void visit_nodes(node_t *node) {
     node_t *next = node;
-    printf(""MACSTR"\n", MAC2STR(node->mac));
     while(next != NULL) {
+        printf(""MACSTR"\n", MAC2STR(next->mac));
         if(next->first_child != NULL) {
             visit_nodes(next->first_child);
         }
@@ -174,6 +176,10 @@ void print_all_nodes(){
         }
     }
     printf("1 - %d\n2 - %d\n3 - %d\n4 - %d\n5 - %d\n6 - %d\n", levels[0],levels[1],levels[2],levels[3],levels[4],levels[5]);
+
+
+    visit_nodes(&root);
+    printf("\n");
     visit_nodes(root.first_child);
     printf("\n");
     visit_nodes(root.first_child->next_sibling);
