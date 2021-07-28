@@ -13,20 +13,20 @@ typedef struct {
 #define ROOT_CHILDS_SIZE (3)
 #define CHILDS_SIZE (9)
 static child_t root_childs[ROOT_CHILDS_SIZE] = {
-        {.mac = {1, 1, 1, 11, 12, 1},.level = 0},
-        {.mac = {1, 1, 1, 11, 12, 2},.level = 0},
-        {.mac = {1, 1, 1, 11, 12, 3},.level = 0}
+        {.mac = {1, 1, 1, 11, 12, 1}},
+        {.mac = {1, 1, 1, 11, 12, 2}},
+        {.mac = {1, 1, 1, 11, 12, 3}}
 };
 static child_t childs[CHILDS_SIZE] = {
-        {.mac = {1, 1, 1, 11, 12, 26},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 27},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 28},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 42},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 43},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 44},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 58},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 59},.level = 1},
-        {.mac = {1, 1, 1, 11, 12, 60},.level = 1},
+        {.mac = {1, 1, 1, 11, 12, 26}},
+        {.mac = {1, 1, 1, 11, 12, 27}},
+        {.mac = {1, 1, 1, 11, 12, 28}},
+        {.mac = {1, 1, 1, 11, 12, 42}},
+        {.mac = {1, 1, 1, 11, 12, 43}},
+        {.mac = {1, 1, 1, 11, 12, 44}},
+        {.mac = {1, 1, 1, 11, 12, 58}},
+        {.mac = {1, 1, 1, 11, 12, 59}},
+        {.mac = {1, 1, 1, 11, 12, 60}}
 };
 typedef struct node {
     struct node *root;
@@ -39,10 +39,13 @@ static uint8_t last_index;
 #define MAX_NODES 20
 static node_t nodes[MAX_NODES];
 static uint8_t levels[6];
-static node_t root = {.mac = {1,1,1,11,12,0}};
+static node_t root = {.mac = {1,1,1,11,12,0},.level = 0};
+static char buff[20];
+static char* buff_ptr = buff;
 
 void fill_child(child_t *child, child_t *parent) {
     memcpy(child->parent_mac, parent->mac, mac_bytes);
+    child->level = parent->level + 1;
 }
 
 // called from mesh callback MESH_STARTED
@@ -72,9 +75,11 @@ my_err append_child(node_t *parent, const child_t *child) {
     node_t *new = &nodes[last_index];
     new->level = child->level;
     memcpy(new->mac, child->mac, mac_bytes);
+    // new child is always pushed into place of the existing first child.
     if(parent->first_child != NULL) {
         new->next_sibling = parent->first_child;
     }
+    // update parent's pointer to the first child
     parent->first_child = new;
     return 0;
 }
@@ -149,14 +154,18 @@ void mesh_rx(){
     n = 3;
     fill_child(&childs[n],&root_childs[1]);
     child_connected(&childs[n], false);
-    //fill_child(&childs[6],&root_childs[2]);
-    //child_connected(&childs[6], false);
-    //fill_child(&childs[7],&root_childs[2]);
-    //child_connected(&childs[7], false);
+    n = 0;
+    fill_child(&childs[n],&childs[6]);
+    child_connected(&childs[n], false);
+    n = 1;
+    fill_child(&childs[n],&childs[0]);
+    child_connected(&childs[n], false);
 }
 void visit_nodes(node_t *node) {
+    *(buff_ptr++) = ']';
     node_t *next = node;
     while(next != NULL) {
+        *(buff_ptr++) = '>';
         printf(""MACSTR"\n", MAC2STR(next->mac));
         if(next->first_child != NULL) {
             visit_nodes(next->first_child);
@@ -180,12 +189,14 @@ void print_all_nodes(){
 
     visit_nodes(&root);
     printf("\n");
-    visit_nodes(root.first_child);
+    /*visit_nodes(root.first_child);
     printf("\n");
     visit_nodes(root.first_child->next_sibling);
     printf("\n");
-    visit_nodes(root.first_child->next_sibling->next_sibling);
-
+    visit_nodes(root.first_child->next_sibling->next_sibling);*/
+    for (int i = 0; i < 20; i++) {
+        printf("%c",buff[i]);
+    }
 }
 void main_fun(){
     mesh_started();
