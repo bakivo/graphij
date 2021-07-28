@@ -3,4 +3,4 @@ project(graphij C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(graphij main.c)
+add_executable(graphij main.c include/trees.h trees.c)
