@@ -15,7 +15,8 @@ typedef struct {
     uint8_t level;
 } child_t;
 
-void tree_print();
+void tree_node_lookup(uint8_t *mac);
+void tree_print_levels();
 void tree_set_root(uint8_t *root_mac, uint8_t level);
 void tree_child_connected(const child_t *child, bool is_connected_to_root);
 void tree_child_lost(child_t *lost_child);

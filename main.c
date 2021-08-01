@@ -1,26 +1,9 @@
 #include <stdio.h>
 #include <libc.h>
 #include "include/trees.h"
+#include "include/tests.h"
 
-#define ROOT_CHILDS_SIZE (3)
-#define CHILDS_SIZE (9)
-void fill_child(child_t *child, child_t *parent);
-static child_t root_childs[ROOT_CHILDS_SIZE] = {
-        {.mac = {1, 1, 1, 11, 12, 1}},
-        {.mac = {1, 1, 1, 11, 12, 2}},
-        {.mac = {1, 1, 1, 11, 12, 3}}
-};
-static child_t childs[CHILDS_SIZE] = {
-        {.mac = {1, 1, 1, 11, 12, 26}},
-        {.mac = {1, 1, 1, 11, 12, 27}},
-        {.mac = {1, 1, 1, 11, 12, 28}},
-        {.mac = {1, 1, 1, 11, 12, 42}},
-        {.mac = {1, 1, 1, 11, 12, 43}},
-        {.mac = {1, 1, 1, 11, 12, 44}},
-        {.mac = {1, 1, 1, 11, 12, 58}},
-        {.mac = {1, 1, 1, 11, 12, 59}},
-        {.mac = {1, 1, 1, 11, 12, 60}}
-};
+void create_pair(uint8_t child_mac[6], uint8_t parent_mac[6], child_t *child);
 static uint8_t macs[10][6] = {
     {1, 1, 1, 11, 12, 0}, // root - 0
     {1, 1, 1, 11, 12, 1}, // 1
@@ -33,10 +16,13 @@ static uint8_t macs[10][6] = {
     {1, 1, 1, 11, 12, 8},
     {1, 1, 1, 11, 12, 9}, // 9
 };
-static uint8_t pairs[10][2] = {
-        {1,0},
-        {2,0},
-        {3,0}
+#define PAIRS_NUM 10
+static uint8_t pairs[PAIRS_NUM][2] = {
+        {4,3},
+        {5,3},
+        {6,2},
+        {7,4},
+        {8,4}
 };
 // called from mesh callback MESH_EVENT_ROOT_ADDRESS
 void mesh_started() {
@@ -53,37 +39,51 @@ void mesh_child_connected(){
 }
 // from all other nodes
 void mesh_rx(){
-    for (int i = 4; i < 10; i++) {
-        ;
+    child_t new_child;
+    uint8_t pairs_num = 0;
+    for(int i = 0; i < PAIRS_NUM; i++) {
+        if (pairs[i][0] == 0) break;
+        pairs_num++;
     }
-    int n = 6;
-    fill_child(&childs[n],&root_childs[0]);
-    tree_child_connected(&childs[n], false);
-    n = 3;
-    fill_child(&childs[n],&root_childs[1]);
-    tree_child_connected(&childs[n], false);
-    n = 0;
-    fill_child(&childs[n],&childs[6]);
-    tree_child_connected(&childs[n], false);
-    n = 1;
-    fill_child(&childs[n],&childs[0]);
-    tree_child_connected(&childs[n], false);
+    //printf("pairs number = %d\n", pairs_num);
+    for (int i = 0; i < pairs_num; i++) {
+        uint8_t child_index = pairs[i][0];
+        uint8_t parent_index = pairs[i][1];
+        create_pair(macs[child_index], macs[parent_index], &new_child);
+        tree_child_connected(&new_child, false);
+        //printf("new\n");
+    }
+}
+void create_pair(uint8_t child_mac[6], uint8_t parent_mac[6], child_t *child) {
+    memcpy(child->parent_mac, parent_mac, sizeof(uint8_t) * 6);
+    memcpy(child->mac, child_mac, sizeof(uint8_t) * 6);
+
 }
 
-void fill_child(child_t *child, child_t *parent) {
-    memcpy(child->parent_mac, parent->mac, sizeof(uint8_t) * 6);
-    child->level = parent->level + 1;
-}
+static bool is_test = false;
 
-int main() {
-    // set root
+void main_tests() {
+    test2();
+}
+void main_functions(){
     mesh_started();
-    // add childs to root
     mesh_child_connected();
-    // add childs to mediate nodes
     mesh_rx();
-    // print
-    tree_print();
+    //tree_print_levels();
+    //tree_node_lookup(macs[3]);
+    //printf("\n\n");
+    child_t child1;
+    memcpy(child1.mac, macs[5], sizeof(uint8_t)*6);
+    tree_child_lost(&child1);
+    //tree_print_levels();
+
+}
+int main() {
+    if (is_test) {
+        main_tests();
+    } else {
+        main_functions();
+    }
     return 0;
 }
 
