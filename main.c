@@ -72,10 +72,11 @@ void main_functions(){
     //tree_print_levels();
     //tree_node_lookup(macs[3]);
     //printf("\n\n");
-    child_t child1;
-    memcpy(child1.mac, macs[5], sizeof(uint8_t)*6);
-    tree_child_lost(&child1);
+    //child_t child1;
+    //memcpy(child1.mac, macs[5], sizeof(uint8_t)*6);
+    //tree_child_lost(&child1);
     //tree_print_levels();
+    tree_node_lookup(macs[3]);
 
 }
 int main() {

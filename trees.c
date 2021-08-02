@@ -35,8 +35,9 @@ void tree_set_root(uint8_t *root_mac, uint8_t level) {
 }
 
 void tree_print_levels(){
+    memset(levels, 0, sizeof(uint8_t)*6);
     for (int i = 0; i < MAX_NODES; i++) {
-        if (*nodes[i].mac != 0) {
+        if (nodes[i].mac[0] != 0) {
             printf(""MACSTR"\n", MAC2STR(nodes[i].mac));
             levels[nodes[i].level]++;
         }
@@ -75,7 +76,7 @@ void tree_child_lost(child_t *lost_child) {
 void tree_node_lookup(uint8_t *mac) {
     node_t *node = get_node(mac);
     if (node == NULL) return;
-    printf(""MACSTR"\n", MAC2STR(mac));
+    printf(""MACSTR"\n", MAC2STR(node->mac));
     if (node->first_child == NULL) return;
     visit_nodes(node->first_child);
     print_visited_nodes();
@@ -121,9 +122,11 @@ void remove_branch(node_t *node) {
     node_t *left = NULL;
     // check if the node being removed is a first child of its parent;
     for (int i = 0; i < MAX_NODES; i++) {
-        if(is_same(nodes[i].first_child->mac, node->mac))
+        if (nodes[i].first_child == NULL) continue;
+        if (is_same(nodes[i].first_child->mac, node->mac)) {
             parent = &nodes[i];
             break;
+        }
     }
     if (parent != NULL) {
         printf("Parent of node removed: "MACSTR"\n", MAC2STR(parent->mac));
@@ -134,10 +137,13 @@ void remove_branch(node_t *node) {
         }
     } // if not so, find the left sibling of it
     else {
-        printf("wrong\n");
+        printf("finding of left sibling\n");
         for (int i = 0; i < MAX_NODES; i++) {
-            if(is_same(nodes[i].next_sibling->mac, node->mac))
+            if (nodes[i].next_sibling == NULL) continue;
+            if (is_same(nodes[i].next_sibling->mac, node->mac)){
                 left = &nodes[i];
+                break;;
+            }
         }
         if (node->next_sibling != NULL) {
             left->next_sibling = node->next_sibling;
@@ -158,7 +164,7 @@ void remove_branch(node_t *node) {
 void visit_nodes(node_t *node) {
     node_t *next = node;
     while(next != NULL) {
-        //printf(""MACSTR"\n", MAC2STR(next->mac));
+        printf(""MACSTR"\n", MAC2STR(next->mac));
         ptrs[ptrs_index++] = next;
         if(next->first_child != NULL) {
             visit_nodes(next->first_child);
@@ -188,13 +194,13 @@ void adjust_array() {
     memset(buff, 0, sizeof(node_t) * MAX_NODES );
     uint8_t j = 0; // will indicate how many non-empty nodes to copy
     for (int i = 0; i < MAX_NODES; i++) {
-        if (nodes->mac[0] != 0) {
+        if (nodes[i].mac[0] != 0) {
             buff[j++] = nodes[i];
         }
     }
     // now buff array contains all non-empty nodes
     // clear nodes array and copy buff array to it
     memset(nodes, 0, sizeof(node_t) * MAX_NODES);
-    memcpy(nodes, buff, sizeof(node_t) * (j + 1) );
-    new_index = j + 1;
+    memcpy(nodes, buff, sizeof(node_t) * j );
+    new_index = j;
 }
