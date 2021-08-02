@@ -17,7 +17,7 @@ static node_t buff[MAX_NODES];
 static node_t root;
 static node_t *ptrs[20];
 static uint8_t ptrs_index;
-static uint8_t new_index;          // very important global variable indexing the last node in array {nodes}
+//static uint8_t new_index;          // very important global variable indexing the last node in array {nodes}
 static uint8_t levels[6];           // distribution of nodes on mesh levels
 // function's definitions
 node_t *get_node(const uint8_t *);
@@ -28,6 +28,7 @@ void visit_nodes(node_t *);
 void print_visited_nodes();
 void adjust_array();
 void delete_marked_nodes();
+int get_index();
 
 void tree_set_root(uint8_t *root_mac, uint8_t level) {
     memcpy(root.mac, root_mac, 6 * sizeof(uint8_t));
@@ -44,6 +45,7 @@ void tree_print_levels(){
         else printf("node\n");
     }
     printf("0 - %d\n1 - %d\n2 - %d\n3 - %d\n4 - %d\n5 - %d\n", 1,levels[1],levels[2],levels[3],levels[4],levels[5]);
+    printf("next index: %d\n", get_index());
 }
 
 // called from mesh callback CHILD_CONNECTED or mesh_rx function
@@ -59,7 +61,9 @@ void tree_child_connected(const child_t *child, bool is_connected_to_root) {
         }
         res = append_child(current_parent,child);
     }
-    if(res == 0) new_index++;
+    if(res == 0) {
+        //new_index++;
+    }
     else printf("error of adding a child: %d\n", res);
 }
 
@@ -105,6 +109,7 @@ node_t *get_node(const uint8_t *mac) {
 // function works with global static array of nodes
 my_err append_child(node_t *parent, const child_t *child) {
     my_err res = -1;
+    int new_index = get_index();
     if (new_index >= MAX_NODES || new_index < 0) return res;
     node_t *new = &nodes[new_index];
     new->level = parent->level + 1;
@@ -164,7 +169,7 @@ void remove_branch(node_t *node) {
 void visit_nodes(node_t *node) {
     node_t *next = node;
     while(next != NULL) {
-        printf(""MACSTR"\n", MAC2STR(next->mac));
+        //printf(""MACSTR"\n", MAC2STR(next->mac));
         ptrs[ptrs_index++] = next;
         if(next->first_child != NULL) {
             visit_nodes(next->first_child);
@@ -186,7 +191,7 @@ void delete_marked_nodes() {
         ptrs[i] = NULL;
     }
     ptrs_index = 0;
-    adjust_array();
+    //adjust_array();
 }
 
 void adjust_array() {
@@ -202,5 +207,16 @@ void adjust_array() {
     // clear nodes array and copy buff array to it
     memset(nodes, 0, sizeof(node_t) * MAX_NODES);
     memcpy(nodes, buff, sizeof(node_t) * j );
-    new_index = j;
+    //new_index = j;
+}
+
+int get_index() {
+    int index = -1;
+    for (int i = 0; i < MAX_NODES; i++) {
+        if (nodes[i].mac[0] == 0){
+            index = i;
+            break;
+        }
+    }
+    return index;
 }
